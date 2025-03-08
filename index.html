@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サブスク管理</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background: #f4f4f4; }
+        input, select { padding: 5px; margin: 5px; width: 90%; max-width: 200px; }
+        button { padding: 5px 10px; cursor: pointer; }
+        .total { font-size: 1.5em; font-weight: bold; margin-top: 10px; }
+        #myChart { width: 100%; max-width: 600px; margin: 20px auto; }
+    </style>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h2>サブスク管理</h2>
+    
+    <div class="total">
+        年間合計: <span id="yearly-total">0</span> 円
+    </div>
+
+    <!-- 入力フォーム -->
+    <input type="text" id="service" placeholder="サービス名">
+    <input type="number" id="price" placeholder="金額">
+    <input type="text" id="date" placeholder="支払日（例: 15日 or 2025-04-01）">
+    <select id="type">
+        <option value="月額">月額</option>
+        <option value="年額">年額</option>
+    </select>
+    <button onclick="addSubscription()">追加</button>
+    <button onclick="downloadCSV()">CSVダウンロード</button>
+    
+    <!-- サブスク一覧 -->
+    <table>
+        <thead>
+            <tr>
+                <th>サービス名</th>
+                <th>金額</th>
+                <th>支払日</th>
+                <th>タイプ</th>
+                <th>削除</th>
+            </tr>
+        </thead>
+        <tbody id="subscription-list"></tbody>
+    </table>
+
+    <!-- グラフ表示 -->
+    <div id="myChart">
+        <canvas id="subscriptionChart"></canvas>
+    </div>
+
+    <script>
+        let subscriptions = JSON.parse(localStorage.getItem("subscriptions")) || [];
+
+        function formatNumber(num) {
+            return num.toLocaleString();
+        }
+
+        function updateTable() {
+            const list = document.getElementById("subscription-list");
+            const yearlyTotalEl = document.getElementById("yearly-total");
+            list.innerHTML = "";
+
+            let yearlyTotal = 0;
+
+            subscriptions.forEach((sub, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${sub.service}</td>
+                    <td>${formatNumber(sub.price)}円</td>
+                    <td>${sub.date}</td>
+                    <td>${sub.type}</td>
+                    <td><button onclick="deleteSubscription(${index})">❌</button></td>
+                `;
+                list.appendChild(row);
+
+                let yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
+                yearlyTotal += yearlyAmount;
+            });
+
+            yearlyTotalEl.textContent = formatNumber(yearlyTotal);
+            localStorage.setItem("subscriptions", JSON.stringify(subscriptions));
+
+            updateChart();
+        }
+
+        function addSubscription() {
+            const service = document.getElementById("service").value;
+            const price = parseFloat(document.getElementById("price").value);
+            const date = document.getElementById("date").value || "不明";
+            const type = document.getElementById("type").value;
+
+            if (!service || isNaN(price)) {
+                alert("サービス名と金額を正しく入力してください");
+                return;
+            }
+
+            subscriptions.push({ service, price, date, type });
+            updateTable();
+
+            document.getElementById("service").value = "";
+            document.getElementById("price").value = "";
+            document.getElementById("date").value = "";
+        }
+
+        function deleteSubscription(index) {
+            subscriptions.splice(index, 1);
+            updateTable();
+        }
+
+        function downloadCSV() {
+            let csvContent = "サービス名,金額,支払日,タイプ\n";
+            subscriptions.forEach(sub => {
+                csvContent += `${sub.service},${sub.price},${sub.date},${sub.type}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "subscriptions.csv";
+            link.click();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('subscriptionChart').getContext('2d');
+
+            // サービスごとの合計金額を集計
+            const labels = [];
+            const data = [];
+            subscriptions.forEach(sub => {
+                if (!labels.includes(sub.service)) {
+                    labels.push(sub.service);
+                    data.push(sub.price);
+                } else {
+                    const index = labels.indexOf(sub.service);
+                    data[index] += sub.price;
+                }
+            });
+
+            // グラフの描画
+            const chart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'サブスク金額',
+                        data: data,
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF6600'],
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                    }
+                }
+            });
+        }
+
+        updateTable();
+    </script>
+
+</body>
+</html>
