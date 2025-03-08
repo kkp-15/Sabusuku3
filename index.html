@@ -146,8 +146,8 @@
             });
 
             // サービスの金額に対する割合を計算
-            const total = data.reduce((sum, val) => sum + val, 0);
-            const percentages = data.map(val => ((val / total) * 100).toFixed(2));
+            const totalAmount = data.reduce((sum, val) => sum + val, 0);
+            const percentages = data.map(val => ((val / totalAmount) * 100).toFixed(2));
 
             // グラフが既に存在する場合は更新、ない場合は新しく作成
             if (chartInstance) {
