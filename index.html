@@ -187,6 +187,14 @@
                     }
                 });
             }
+
+            // %表示の更新
+            const percentageDisplay = document.getElementById("percentage-display");
+            if (percentageDisplay) {
+                percentageDisplay.innerHTML = percentages.map((percentage, index) => {
+                    return `${labels[index]}: ${percentage}%`;
+                }).join("<br>");
+            }
         }
 
         updateTable(); // 初期データを表示
