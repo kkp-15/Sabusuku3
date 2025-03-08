@@ -46,6 +46,7 @@
                 <th>支払日</th>
                 <th>タイプ</th>
                 <th>削除</th>
+                <th>割合</th>
             </tr>
         </thead>
         <tbody id="subscription-list"></tbody>
@@ -79,6 +80,7 @@
                     <td>${sub.date}</td>
                     <td>${sub.type}</td>
                     <td><button onclick="deleteSubscription(${index})">❌</button></td>
+                    <td>${getPercentage(sub, yearlyTotal)}%</td>
                 `;
                 list.appendChild(row);
 
@@ -90,6 +92,11 @@
             localStorage.setItem("subscriptions", JSON.stringify(subscriptions));
 
             updateChart(); // グラフを更新
+        }
+
+        function getPercentage(sub, total) {
+            let yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
+            return ((yearlyAmount / total) * 100).toFixed(2);
         }
 
         function addSubscription() {
@@ -145,10 +152,6 @@
                 }
             });
 
-            // サービスの金額に対する割合を計算
-            const totalAmount = data.reduce((sum, val) => sum + val, 0);
-            const percentages = data.map(val => ((val / totalAmount) * 100).toFixed(2));
-
             // グラフが既に存在する場合は更新、ない場合は新しく作成
             if (chartInstance) {
                 chartInstance.data.labels = labels;
@@ -178,8 +181,7 @@
                                     label: function(tooltipItem) {
                                         const label = tooltipItem.label || '';
                                         const value = tooltipItem.raw || 0;
-                                        const percentage = ((value / totalAmount) * 100).toFixed(2); // 割合を直接計算
-                                        return `${label}: ${formatNumber(value)}円 (${percentage}%)`;
+                                        return `${label}: ${formatNumber(value)}円`;
                                     }
                                 }
                             }
