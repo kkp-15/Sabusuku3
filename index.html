@@ -95,8 +95,9 @@
         }
 
         function getPercentage(sub, total) {
+            if (total === 0) return '0.00'; // 総合計が0の場合
             let yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
-            return ((yearlyAmount / total) * 100).toFixed(2);
+            return ((yearlyAmount / total) * 100).toFixed(2); // パーセンテージを計算
         }
 
         function addSubscription() {
@@ -111,7 +112,7 @@
             }
 
             subscriptions.push({ service, price, date, type });
-            updateTable();
+            updateTable(); // サブスク追加後にテーブルを更新
 
             document.getElementById("service").value = "";
             document.getElementById("price").value = "";
@@ -120,7 +121,7 @@
 
         function deleteSubscription(index) {
             subscriptions.splice(index, 1);
-            updateTable(); // 削除後にテーブルとグラフを更新
+            updateTable(); // 削除後にテーブルを更新
         }
 
         function downloadCSV() {
