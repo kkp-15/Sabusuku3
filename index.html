@@ -72,32 +72,39 @@
 
             let yearlyTotal = 0;
 
-            subscriptions.forEach((sub, index) => {
+            subscriptions.forEach((sub) => {
+                // 年間合計を計算
+                let yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
+                yearlyTotal += yearlyAmount;
+            });
+
+            // 年間合計を表示
+            yearlyTotalEl.textContent = formatNumber(yearlyTotal);
+
+            subscriptions.forEach((sub) => {
+                // 年間合計を計算
+                let yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
+
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${sub.service}</td>
                     <td>${formatNumber(sub.price)}円</td>
                     <td>${sub.date}</td>
                     <td>${sub.type}</td>
-                    <td><button onclick="deleteSubscription(${index})">❌</button></td>
-                    <td>${getPercentage(sub, yearlyTotal)}%</td>
+                    <td><button onclick="deleteSubscription(${subscriptions.indexOf(sub)})">❌</button></td>
+                    <td>${getPercentage(yearlyAmount, yearlyTotal)}%</td>
                 `;
                 list.appendChild(row);
-
-                let yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
-                yearlyTotal += yearlyAmount;
             });
 
-            yearlyTotalEl.textContent = formatNumber(yearlyTotal);
             localStorage.setItem("subscriptions", JSON.stringify(subscriptions));
-
             updateChart(); // グラフを更新
         }
 
-        function getPercentage(sub, total) {
+        // 割合を計算する関数
+        function getPercentage(amount, total) {
             if (total === 0) return '0.00'; // 総合計が0の場合
-            let yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
-            return ((yearlyAmount / total) * 100).toFixed(2); // パーセンテージを計算
+            return ((amount / total) * 100).toFixed(2); // パーセンテージを計算
         }
 
         function addSubscription() {
@@ -144,12 +151,14 @@
             const labels = [];
             const data = [];
             subscriptions.forEach(sub => {
+                const yearlyAmount = (sub.type === "月額") ? sub.price * 12 : sub.price;
+
                 if (!labels.includes(sub.service)) {
                     labels.push(sub.service);
-                    data.push(sub.price);
+                    data.push(yearlyAmount);
                 } else {
                     const index = labels.indexOf(sub.service);
-                    data[index] += sub.price;
+                    data[index] += yearlyAmount;
                 }
             });
 
